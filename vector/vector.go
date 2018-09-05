@@ -19,7 +19,6 @@ const (
 	INVALID_TYPE      = "Invalid type"
 	INVALID_DIMENSION = "Invalid dimension"
 	DIVISION_BY_ZERO  = "Divison by zero not allowed"
-	INVALID_INDEX     = "Invalid index"
 )
 
 type Vector interface {
@@ -29,8 +28,6 @@ type Vector interface {
 
 	Add(v *Vector) (Vector, error)
 	Subtract(v *Vector) (Vector, error)
-	Multiply(v *Vector) (Vector, error)
-	Divide(v *Vector) (Vector, error)
 
 	MultiplyByScalar(f float64) Vector
 	DivideByScalar(f float64) (Vector, error)
@@ -67,16 +64,16 @@ func NewWithValues(rest ...float64) Vector {
 }
 
 func (av AbstractVector) Add(v *Vector) (Vector, error) {
-	if reflect.TypeOf(v) != reflect.TypeOf(av) {
+	if reflect.TypeOf(*v) != reflect.TypeOf(av) {
 		return nil, errors.New(INVALID_TYPE)
 	}
 	maxDimension := max(av.dimension, (*v).Dimension())
 	coordinates := make([]coordinate, maxDimension)
-	for i := 0; i < av.dimension; i++ {
+	for i := 0; i < maxDimension; i++ {
 		vCoordinate := (*v).Get(i)
 		coordinates[i] = av.Get(i) + vCoordinate
 	}
-	return AbstractVector{av.dimension, coordinates}, nil
+	return AbstractVector{maxDimension, coordinates}, nil
 }
 
 func max(x, y int) int {
@@ -84,42 +81,16 @@ func max(x, y int) int {
 }
 
 func (av AbstractVector) Subtract(v *Vector) (Vector, error) {
-	if reflect.TypeOf(v) != reflect.TypeOf(av) {
+	if reflect.TypeOf(*v) != reflect.TypeOf(av) {
 		return nil, errors.New(INVALID_TYPE)
 	}
 	maxDimension := max(av.dimension, (*v).Dimension())
 	coordinates := make([]coordinate, maxDimension)
-	for i := 0; i < av.dimension; i++ {
+	for i := 0; i < maxDimension; i++ {
 		vCoordinate := (*v).Get(i)
 		coordinates[i] = av.Get(i) - vCoordinate
 	}
-	return AbstractVector{av.dimension, coordinates}, nil
-}
-
-func (av AbstractVector) Multiply(v *Vector) (Vector, error) {
-	if reflect.TypeOf(v) != reflect.TypeOf(av) {
-		return nil, errors.New(INVALID_TYPE)
-	}
-	maxDimension := max(av.dimension, (*v).Dimension())
-	coordinates := make([]coordinate, maxDimension)
-	for i := 0; i < av.dimension; i++ {
-		vCoordinate := (*v).Get(i)
-		coordinates[i] = av.Get(i) * vCoordinate
-	}
-	return AbstractVector{av.dimension, coordinates}, nil
-}
-
-func (av AbstractVector) Divide(v *Vector) (Vector, error) {
-	if reflect.TypeOf(v) != reflect.TypeOf(av) {
-		return nil, errors.New(INVALID_TYPE)
-	}
-	maxDimension := max(av.dimension, (*v).Dimension())
-	coordinates := make([]coordinate, maxDimension)
-	for i := 0; i < av.dimension; i++ {
-		vCoordinate := (*v).Get(i)
-		coordinates[i] = av.Get(i) / vCoordinate
-	}
-	return AbstractVector{av.dimension, coordinates}, nil
+	return AbstractVector{maxDimension, coordinates}, nil
 }
 
 func (av AbstractVector) Get(i int) coordinate {
@@ -130,7 +101,11 @@ func (av AbstractVector) Get(i int) coordinate {
 }
 
 func (av AbstractVector) MultiplyByScalar(c float64) Vector {
-	return av
+	coordinates := make([]coordinate, av.dimension)
+	for i := 0; i < len(av.coordinates); i++ {
+		coordinates[i] = (coordinate)((float64)(av.Get(i)) * c)
+	}
+	return AbstractVector{av.dimension, coordinates}
 }
 
 func (av AbstractVector) DivideByScalar(f float64) (Vector, error) {
@@ -158,6 +133,9 @@ func (av AbstractVector) SquaredLength() float64 {
 
 func (av AbstractVector) ConvertToUnitVector() {
 	length := av.Length()
+	if length == 0 {
+		return
+	}
 	for i, x := range av.coordinates {
 		av.coordinates[i] = coordinate((float64)(x) / length)
 	}
@@ -165,15 +143,12 @@ func (av AbstractVector) ConvertToUnitVector() {
 }
 
 func (av AbstractVector) Equals(v *Vector) bool {
-	if reflect.TypeOf(v) != reflect.TypeOf(av) {
+	if reflect.TypeOf(*v) != reflect.TypeOf(av) {
 		return false
 	}
-	if av.dimension != (*v).Dimension() {
-		return false
-	}
-	for i, coordinate := range av.coordinates {
-		vCoordinate := (*v).Get(i)
-		if vCoordinate != coordinate {
+	maxDimension := max(av.dimension, (*v).Dimension())
+	for i := 0; i < maxDimension; i++ {
+		if (*v).Get(i) != av.Get(i) {
 			return false
 		}
 	}
