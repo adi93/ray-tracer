@@ -19,9 +19,9 @@ func TestDimension(t *testing.T) {
 		vector            Vector
 		expectedDimension int
 	}{
-		{AbstractVector{}, 0},
-		{AbstractVector{1, []coordinate{1}}, 1},
-		{AbstractVector{4, []coordinate{1, 2.23, -12, 0}}, 4},
+		{abstractVector{}, 0},
+		{abstractVector{1, []float64{1}}, 1},
+		{abstractVector{4, []float64{1, 2.23, -12, 0}}, 4},
 	}
 	for _, x := range tests {
 		actualDimension := x.vector.Dimension()
@@ -35,11 +35,11 @@ func TestDimension(t *testing.T) {
 func TestGet(t *testing.T) {
 	tests := []struct {
 		vector              Vector
-		expectedCoordinates []coordinate
+		expectedCoordinates []float64
 	}{
-		{AbstractVector{}, []coordinate{}},
-		{AbstractVector{1, []coordinate{1}}, []coordinate{1}},
-		{AbstractVector{4, []coordinate{1, 2.23, -12, 0}}, []coordinate{1, 2.23, -12, 0}},
+		{abstractVector{}, []float64{}},
+		{abstractVector{1, []float64{1}}, []float64{1}},
+		{abstractVector{4, []float64{1, 2.23, -12, 0}}, []float64{1, 2.23, -12, 0}},
 	}
 	for _, x := range tests {
 		actualVector := x.vector
@@ -55,9 +55,9 @@ func TestGet(t *testing.T) {
 		vector     Vector
 		panicIndex int
 	}{
-		{AbstractVector{}, 0},
-		{AbstractVector{1, []coordinate{1}}, 1},
-		{AbstractVector{2, []coordinate{1, 2}}, 2},
+		{abstractVector{}, 0},
+		{abstractVector{1, []float64{1}}, 1},
+		{abstractVector{2, []float64{1, 2}}, 2},
 	}
 
 	for _, test := range zeroTests {
@@ -105,8 +105,8 @@ func TestNewWithValues(t *testing.T) {
 		vector         Vector
 		expectedVector Vector
 	}{
-		{NewWithValues(1, 2), AbstractVector{2, []coordinate{1, 2}}},
-		{NewWithValues(1), AbstractVector{1, []coordinate{1}}},
+		{NewWithValues(1, 2), abstractVector{2, []float64{1, 2}}},
+		{NewWithValues(1), abstractVector{1, []float64{1}}},
 	}
 	for _, x := range tests {
 		actualVec := x.vector
@@ -131,12 +131,12 @@ func TestEquals(t *testing.T) {
 		expectedResult bool
 	}{
 		{New(), New(), true},
-		{AbstractVector{1, []coordinate{0}}, NewWithValues(), true},
+		{abstractVector{1, []float64{0}}, NewWithValues(), true},
 		{NewWithValues(1, 2), NewWithValues(1, 2), true},
-		{NewWithValues(1, 2), AbstractVector{2, []coordinate{1, 2}}, true},
-		{NewWithValues(1, 2), AbstractVector{2, []coordinate{1, 2}}, true},
-		{NewWithValues(1, 2), AbstractVector{3, []coordinate{1, 2, 3}}, false},
-		{NewWithValues(1, 2), AbstractVector{3, []coordinate{1, 2, 0}}, true},
+		{NewWithValues(1, 2), abstractVector{2, []float64{1, 2}}, true},
+		{NewWithValues(1, 2), abstractVector{2, []float64{1, 2}}, true},
+		{NewWithValues(1, 2), abstractVector{3, []float64{1, 2, 3}}, false},
+		{NewWithValues(1, 2), abstractVector{3, []float64{1, 2, 0}}, true},
 	}
 	for i, test := range tests {
 		result := test.vectorA.Equals(&test.vectorB)
@@ -302,5 +302,22 @@ func TestSquaredLength(t *testing.T) {
 			t.Fatalf("Failed on test %d! Expected %v, found %v", i+1, test.expectedSquaredLength, actualSquaredLength)
 		}
 	}
+}
 
+func TestSet(t *testing.T) {
+	tests := []struct {
+		vector Vector
+		index  int
+		value  float64
+	}{
+		{NewWithValues(1, 2, 3), 0, 4},
+		{NewWithValues(1, 2, 3), 3, 0},
+	}
+	for i, test := range tests {
+		test.vector.Set(test.index, test.value)
+		foundValue := test.vector.Get(test.index)
+		if foundValue != test.value {
+			t.Fatalf("Failed on test %d! Expected %v, found %v", i+1, test.value, foundValue)
+		}
+	}
 }

@@ -22,7 +22,7 @@ const (
 )
 
 type Vector interface {
-	Get(i int) coordinate
+	Get(i int) float64
 	Length() float64
 	Dimension() int
 
@@ -36,86 +36,92 @@ type Vector interface {
 	ConvertToUnitVector()
 
 	Equals(v *Vector) bool
+	Set(i int, value float64)
 }
 
-type coordinate float64
-
-type AbstractVector struct {
+type abstractVector struct {
 	dimension   int
-	coordinates []coordinate
+	coordinates []float64
 }
 
 func New() Vector {
-	return AbstractVector{1, []coordinate{0}}
+	return abstractVector{1, []float64{0}}
 }
 
-func (av AbstractVector) Dimension() int {
+func (av abstractVector) Dimension() int {
 	return av.dimension
 }
+
+func NewFromArray(rest []float64) Vector {
+	return abstractVector{len(rest), rest}
+}
+
 func NewWithValues(rest ...float64) Vector {
 	if len(rest) == 0 {
 		return New()
 	}
-	coordinates := make([]coordinate, len(rest))
+	coordinates := make([]float64, len(rest))
 	for i, x := range rest {
-		coordinates[i] = (coordinate)(x)
+		coordinates[i] = (float64)(x)
 	}
-	return AbstractVector{len(rest), coordinates}
+	return abstractVector{len(rest), coordinates}
 }
 
-func (av AbstractVector) Add(v *Vector) (Vector, error) {
+func (av abstractVector) Add(v *Vector) (Vector, error) {
 	if reflect.TypeOf(*v) != reflect.TypeOf(av) {
 		return nil, errors.New(INVALID_TYPE)
 	}
 	maxDimension := max(av.dimension, (*v).Dimension())
-	coordinates := make([]coordinate, maxDimension)
+	coordinates := make([]float64, maxDimension)
 	for i := 0; i < maxDimension; i++ {
 		vCoordinate := (*v).Get(i)
 		coordinates[i] = av.Get(i) + vCoordinate
 	}
-	return AbstractVector{maxDimension, coordinates}, nil
+	return abstractVector{maxDimension, coordinates}, nil
 }
 
 func max(x, y int) int {
 	return (int)(math.Max((float64)(x), (float64)(y)))
 }
 
-func (av AbstractVector) Subtract(v *Vector) (Vector, error) {
+func (av abstractVector) Subtract(v *Vector) (Vector, error) {
 	if reflect.TypeOf(*v) != reflect.TypeOf(av) {
 		return nil, errors.New(INVALID_TYPE)
 	}
 	maxDimension := max(av.dimension, (*v).Dimension())
-	coordinates := make([]coordinate, maxDimension)
+	coordinates := make([]float64, maxDimension)
 	for i := 0; i < maxDimension; i++ {
 		vCoordinate := (*v).Get(i)
 		coordinates[i] = av.Get(i) - vCoordinate
 	}
-	return AbstractVector{maxDimension, coordinates}, nil
+	return abstractVector{maxDimension, coordinates}, nil
 }
 
-func (av AbstractVector) Get(i int) coordinate {
+func (av abstractVector) Get(i int) float64 {
 	if i >= av.dimension {
 		return 0
+	} else if i < 0 {
+		panic("coordinate index cannot be negative")
 	}
 	return av.coordinates[i]
 }
 
-func (av AbstractVector) MultiplyByScalar(c float64) Vector {
-	coordinates := make([]coordinate, av.dimension)
+func (av abstractVector) MultiplyByScalar(c float64) Vector {
+	coordinates := make([]float64, av.dimension)
 	for i := 0; i < len(av.coordinates); i++ {
-		coordinates[i] = (coordinate)((float64)(av.Get(i)) * c)
+		coordinates[i] = (float64)((float64)(av.Get(i)) * c)
 	}
-	return AbstractVector{av.dimension, coordinates}
+	return abstractVector{av.dimension, coordinates}
 }
 
-func (av AbstractVector) DivideByScalar(f float64) (Vector, error) {
+func (av abstractVector) DivideByScalar(f float64) (Vector, error) {
 	if f == 0 {
 		return nil, errors.New(DIVISION_BY_ZERO)
 	}
 	return av.MultiplyByScalar(1 / f), nil
 }
 
-func (av AbstractVector) Length() float64 {
+func (av abstractVector) Length() float64 {
 	var length float64
 	for _, x := range av.coordinates {
 		length += (float64)(x) * (float64)(x)
@@ -123,7 +129,7 @@ func (av AbstractVector) Length() float64 {
 	return math.Sqrt(length)
 }
 
-func (av AbstractVector) SquaredLength() float64 {
+func (av abstractVector) SquaredLength() float64 {
 	var length float64
 	for _, x := range av.coordinates {
 		length += (float64)(x) * (float64)(x)
@@ -131,18 +137,24 @@ func (av AbstractVector) SquaredLength() float64 {
 	return length
 }
 
-func (av AbstractVector) ConvertToUnitVector() {
+func (av abstractVector) ConvertToUnitVector() {
 	length := av.Length()
 	if length == 0 {
 		return
 	}
 	for i, x := range av.coordinates {
-		av.coordinates[i] = coordinate((float64)(x) / length)
+		av.coordinates[i] = float64((float64)(x) / length)
 	}
 	return
 }
 
-func (av AbstractVector) Equals(v *Vector) bool {
+func (av abstractVector) Set(i int, value float64) {
+	if i < av.dimension && i >= 0 {
+		av.coordinates[i] = value
+	}
+}
+
+func (av abstractVector) Equals(v *Vector) bool {
 	if reflect.TypeOf(*v) != reflect.TypeOf(av) {
 		return false
 	}
@@ -155,18 +167,35 @@ func (av AbstractVector) Equals(v *Vector) bool {
 	return true
 }
 
-var _ Vector = (*AbstractVector)(nil)
+var _ Vector = (*abstractVector)(nil)
 
-type PositionalVector interface {
-	Vector
-	X() coordinate
-	Y() coordinate
-	Z() coordinate
+type positionalVec3 struct {
+	abstractVector
+}
+
+func PositionVec3() positionalVec3 {
+	return positionalVec3{abstractVector{3, []float64{0, 0, 0}}}
+}
+
+func PositionVec3WithValues(values ...float64) positionalVec3 {
+	return positionalVec3{abstractVector{len(values), values}}
+}
+
+func (pv3 positionalVec3) X() float64 {
+	return pv3.Get(0)
+}
+
+func (pv3 positionalVec3) Y() float64 {
+	return pv3.Get(0)
+}
+
+func (pv3 positionalVec3) Z() float64 {
+	return pv3.Get(0)
 }
 
 type ColorVector interface {
 	Vector
-	R() coordinate
-	G() coordinate
-	B() coordinate
+	R() float64
+	G() float64
+	B() float64
 }
