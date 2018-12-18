@@ -12,116 +12,102 @@ package vector
 import (
 	"errors"
 	"math"
-	"reflect"
+	"strconv"
 )
 
 const (
-	INVALID_TYPE      = "Invalid type"
-	INVALID_DIMENSION = "Invalid dimension"
-	DIVISION_BY_ZERO  = "Divison by zero not allowed"
+	INVALID_DIMENSION  = "Invalid dimension"
+	DIVISION_BY_ZERO   = "Divison by zero not allowed"
+	INDEX_OUT_OF_BOUND = "Index out of bound"
 )
 
-type Vector interface {
-	Get(i int) float64
-	Length() float64
-	Dimension() int
-
-	Add(v *Vector) (Vector, error)
-	Subtract(v *Vector) (Vector, error)
-
-	MultiplyByScalar(f float64) Vector
-	DivideByScalar(f float64) (Vector, error)
-
-	SquaredLength() float64
-	ConvertToUnitVector()
-
-	Equals(v *Vector) bool
-	Set(i int, value float64)
-}
-
-type abstractVector struct {
+type Vector struct {
 	dimension   int
 	coordinates []float64
 }
 
 func New() Vector {
-	return abstractVector{1, []float64{0}}
+	return Vector{1, []float64{0}}
 }
 
-func (av abstractVector) Dimension() int {
+func (av Vector) Dimension() int {
 	return av.dimension
 }
 
-func NewFromArray(rest []float64) Vector {
-	return abstractVector{len(rest), rest}
+func NewFromArray(values []float64) Vector {
+	if len(values) == 0 {
+		return Vector{1, []float64{0}}
+	}
+	return Vector{len(values), values}
 }
 
-func NewWithValues(rest ...float64) Vector {
-	if len(rest) == 0 {
+func NewWithValues(values ...float64) Vector {
+	if len(values) == 0 {
 		return New()
 	}
-	coordinates := make([]float64, len(rest))
-	for i, x := range rest {
+	coordinates := make([]float64, len(values))
+	for i, x := range values {
 		coordinates[i] = (float64)(x)
 	}
-	return abstractVector{len(rest), coordinates}
+	return Vector{len(values), coordinates}
 }
 
-func (av abstractVector) Add(v *Vector) (Vector, error) {
-	if reflect.TypeOf(*v) != reflect.TypeOf(av) {
-		return nil, errors.New(INVALID_TYPE)
+func (av Vector) Add(v *Vector) (Vector, error) {
+	if av.dimension != (*v).Dimension() {
+		return Vector{}, errors.New(INVALID_DIMENSION)
 	}
-	maxDimension := max(av.dimension, (*v).Dimension())
-	coordinates := make([]float64, maxDimension)
-	for i := 0; i < maxDimension; i++ {
+	dimension := av.dimension
+	coordinates := make([]float64, dimension)
+	for i := 0; i < dimension; i++ {
 		vCoordinate := (*v).Get(i)
 		coordinates[i] = av.Get(i) + vCoordinate
 	}
-	return abstractVector{maxDimension, coordinates}, nil
+	return Vector{dimension, coordinates}, nil
 }
 
 func max(x, y int) int {
-	return (int)(math.Max((float64)(x), (float64)(y)))
+	a := (int)(math.Max((float64)(x), (float64)(y)))
+	return a
 }
 
-func (av abstractVector) Subtract(v *Vector) (Vector, error) {
-	if reflect.TypeOf(*v) != reflect.TypeOf(av) {
-		return nil, errors.New(INVALID_TYPE)
+func (av Vector) Subtract(v *Vector) (Vector, error) {
+	if av.dimension != (*v).Dimension() {
+		return Vector{}, errors.New(INVALID_DIMENSION)
 	}
-	maxDimension := max(av.dimension, (*v).Dimension())
-	coordinates := make([]float64, maxDimension)
-	for i := 0; i < maxDimension; i++ {
+	dimension := av.dimension
+	coordinates := make([]float64, dimension)
+	for i := 0; i < dimension; i++ {
 		vCoordinate := (*v).Get(i)
 		coordinates[i] = av.Get(i) - vCoordinate
 	}
-	return abstractVector{maxDimension, coordinates}, nil
+	return Vector{dimension, coordinates}, nil
 }
 
-func (av abstractVector) Get(i int) float64 {
+func (av Vector) Get(i int) float64 {
 	if i >= av.dimension {
 		return 0
 	} else if i < 0 {
-		panic("coordinate index cannot be negative")
+		panic(INDEX_OUT_OF_BOUND + ": " + strconv.Itoa(i))
 	}
 	return av.coordinates[i]
 }
 
-func (av abstractVector) MultiplyByScalar(c float64) Vector {
+func (av Vector) MultiplyByScalar(c float64) Vector {
 	coordinates := make([]float64, av.dimension)
 	for i := 0; i < len(av.coordinates); i++ {
 		coordinates[i] = (float64)((float64)(av.Get(i)) * c)
 	}
-	return abstractVector{av.dimension, coordinates}
+	return Vector{av.dimension, coordinates}
 }
 
-func (av abstractVector) DivideByScalar(f float64) (Vector, error) {
+func (av Vector) DivideByScalar(f float64) (Vector, error) {
 	if f == 0 {
-		return nil, errors.New(DIVISION_BY_ZERO)
+		return Vector{}, errors.New(DIVISION_BY_ZERO)
 	}
 	return av.MultiplyByScalar(1 / f), nil
 }
 
-func (av abstractVector) Length() float64 {
+func (av Vector) Length() float64 {
 	var length float64
 	for _, x := range av.coordinates {
 		length += (float64)(x) * (float64)(x)
@@ -129,7 +115,7 @@ func (av abstractVector) Length() float64 {
 	return math.Sqrt(length)
 }
 
-func (av abstractVector) SquaredLength() float64 {
+func (av Vector) SquaredLength() float64 {
 	var length float64
 	for _, x := range av.coordinates {
 		length += (float64)(x) * (float64)(x)
@@ -137,7 +123,7 @@ func (av abstractVector) SquaredLength() float64 {
 	return length
 }
 
-func (av abstractVector) ConvertToUnitVector() {
+func (av Vector) ConvertToUnitVector() {
 	length := av.Length()
 	if length == 0 {
 		return
@@ -148,54 +134,23 @@ func (av abstractVector) ConvertToUnitVector() {
 	return
 }
 
-func (av abstractVector) Set(i int, value float64) {
+func (av Vector) Set(i int, value float64) {
 	if i < av.dimension && i >= 0 {
 		av.coordinates[i] = value
+	} else {
+		panic(INDEX_OUT_OF_BOUND + ": " + strconv.Itoa(i))
 	}
 }
 
-func (av abstractVector) Equals(v *Vector) bool {
-	if reflect.TypeOf(*v) != reflect.TypeOf(av) {
+func (av Vector) Equals(v *Vector) bool {
+	if av.dimension != (*v).Dimension() {
 		return false
 	}
-	maxDimension := max(av.dimension, (*v).Dimension())
-	for i := 0; i < maxDimension; i++ {
+	dimension := av.dimension
+	for i := 0; i < dimension; i++ {
 		if (*v).Get(i) != av.Get(i) {
 			return false
 		}
 	}
 	return true
-}
-
-var _ Vector = (*abstractVector)(nil)
-
-type positionalVec3 struct {
-	abstractVector
-}
-
-func PositionVec3() positionalVec3 {
-	return positionalVec3{abstractVector{3, []float64{0, 0, 0}}}
-}
-
-func PositionVec3WithValues(values ...float64) positionalVec3 {
-	return positionalVec3{abstractVector{len(values), values}}
-}
-
-func (pv3 positionalVec3) X() float64 {
-	return pv3.Get(0)
-}
-
-func (pv3 positionalVec3) Y() float64 {
-	return pv3.Get(0)
-}
-
-func (pv3 positionalVec3) Z() float64 {
-	return pv3.Get(0)
-}
-
-type ColorVector interface {
-	Vector
-	R() float64
-	G() float64
-	B() float64
 }

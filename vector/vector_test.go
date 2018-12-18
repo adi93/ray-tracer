@@ -10,6 +10,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 package vector
 
 import (
+	"errors"
 	"math"
 	"testing"
 )
@@ -19,9 +20,9 @@ func TestDimension(t *testing.T) {
 		vector            Vector
 		expectedDimension int
 	}{
-		{abstractVector{}, 0},
-		{abstractVector{1, []float64{1}}, 1},
-		{abstractVector{4, []float64{1, 2.23, -12, 0}}, 4},
+		{Vector{}, 0},
+		{Vector{1, []float64{1}}, 1},
+		{Vector{4, []float64{1, 2.23, -12, 0}}, 4},
 	}
 	for _, x := range tests {
 		actualDimension := x.vector.Dimension()
@@ -37,9 +38,9 @@ func TestGet(t *testing.T) {
 		vector              Vector
 		expectedCoordinates []float64
 	}{
-		{abstractVector{}, []float64{}},
-		{abstractVector{1, []float64{1}}, []float64{1}},
-		{abstractVector{4, []float64{1, 2.23, -12, 0}}, []float64{1, 2.23, -12, 0}},
+		{Vector{}, []float64{}},
+		{Vector{1, []float64{1}}, []float64{1}},
+		{Vector{4, []float64{1, 2.23, -12, 0}}, []float64{1, 2.23, -12, 0}},
 	}
 	for _, x := range tests {
 		actualVector := x.vector
@@ -52,21 +53,47 @@ func TestGet(t *testing.T) {
 	}
 
 	zeroTests := []struct {
-		vector     Vector
-		panicIndex int
+		vector Vector
+		index  int
 	}{
-		{abstractVector{}, 0},
-		{abstractVector{1, []float64{1}}, 1},
-		{abstractVector{2, []float64{1, 2}}, 2},
+		{Vector{}, 0},
+		{Vector{1, []float64{1}}, 1},
+		{Vector{1, []float64{1}}, 5},
+		{Vector{2, []float64{1, 2}}, 2},
 	}
 
 	for _, test := range zeroTests {
 		vector := test.vector
-		coord := vector.Get(test.panicIndex)
+		coord := vector.Get(test.index)
 		if coord != 0 {
 			t.Fatalf("Failed! Expected zero for out of bound index, got %f", coord)
 		}
 	}
+}
+
+func TestGetPanic(t *testing.T) {
+	panicTests := []struct {
+		vector     Vector
+		panicIndex int
+	}{
+		{Vector{}, -1},
+		{Vector{1, []float64{1}}, -5},
+		{Vector{2, []float64{1, 2}}, -2},
+	}
+
+	for _, test := range panicTests {
+		testGetPanic(test.vector, test.panicIndex, t)
+	}
+}
+
+func testGetPanic(vector Vector, index int, t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatalf("The code did not panic")
+		}
+	}()
+
+	_ = vector.Get(index)
 }
 
 func TestNew(t *testing.T) {
@@ -79,7 +106,7 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func Testmax(t *testing.T) {
+func TestMax(t *testing.T) {
 	tests := []struct {
 		a        int
 		b        int
@@ -105,8 +132,9 @@ func TestNewWithValues(t *testing.T) {
 		vector         Vector
 		expectedVector Vector
 	}{
-		{NewWithValues(1, 2), abstractVector{2, []float64{1, 2}}},
-		{NewWithValues(1), abstractVector{1, []float64{1}}},
+		{NewWithValues(1, 2), Vector{2, []float64{1, 2}}},
+		{NewWithValues(1), Vector{1, []float64{1}}},
+		{NewWithValues(), Vector{1, []float64{0}}},
 	}
 	for _, x := range tests {
 		actualVec := x.vector
@@ -124,19 +152,47 @@ func TestNewWithValues(t *testing.T) {
 	}
 }
 
+func TestNewFromArray(t *testing.T) {
+	tests := []struct {
+		vector         Vector
+		expectedVector Vector
+	}{
+		{NewFromArray([]float64{1, 2}), Vector{2, []float64{1, 2}}},
+		{NewFromArray([]float64{1}), Vector{1, []float64{1}}},
+		{NewFromArray([]float64{}), Vector{1, []float64{0}}},
+	}
+	for i, x := range tests {
+		actualVec := x.vector
+		expectedVec := x.expectedVector
+		if actualVec.Dimension() != expectedVec.Dimension() {
+			t.Fatalf("Dimension check failed for test %d. Expected %d, got %d", i+1, expectedVec.Dimension(), actualVec.Dimension())
+		}
+		for d := 0; d < actualVec.Dimension(); d++ {
+			actualCoord := actualVec.Get(d)
+			expectedCoord := expectedVec.Get(d)
+			if expectedCoord != actualCoord {
+				t.Fatalf("Failed for test %d! Expected %f, found %f", i+1, expectedCoord, actualCoord)
+			}
+		}
+	}
+}
+
 func TestEquals(t *testing.T) {
 	tests := []struct {
 		vectorA        Vector
 		vectorB        Vector
 		expectedResult bool
 	}{
-		{New(), New(), true},
-		{abstractVector{1, []float64{0}}, NewWithValues(), true},
-		{NewWithValues(1, 2), NewWithValues(1, 2), true},
-		{NewWithValues(1, 2), abstractVector{2, []float64{1, 2}}, true},
-		{NewWithValues(1, 2), abstractVector{2, []float64{1, 2}}, true},
-		{NewWithValues(1, 2), abstractVector{3, []float64{1, 2, 3}}, false},
-		{NewWithValues(1, 2), abstractVector{3, []float64{1, 2, 0}}, true},
+		{Vector{1, []float64{0}}, Vector{1, []float64{0}}, true},
+		{Vector{1, []float64{0}}, NewWithValues(), true},
+		{Vector{1, []float64{1, 2}}, Vector{1, []float64{1, 2}}, true},
+		{Vector{2, []float64{1, 2}}, Vector{2, []float64{1, 2}}, true},
+		{Vector{2, []float64{1, 2}}, Vector{2, []float64{1, 2}}, true},
+		{Vector{2, []float64{1, 2}}, Vector{3, []float64{1, 2, 3}}, false},
+		{Vector{2, []float64{1, 2}}, Vector{3, []float64{1, 2, 0}}, false},
+		{Vector{2, []float64{1, 2}}, Vector{2, []float64{1, -3}}, false},
+		{Vector{1, []float64{1}}, Vector{2, []float64{1, -3}}, false},
+		{Vector{4, []float64{1, 3.2, -2, -6.67}}, Vector{4, []float64{1, 3.2, -2, -6.66}}, false},
 	}
 	for i, test := range tests {
 		result := test.vectorA.Equals(&test.vectorB)
@@ -155,20 +211,36 @@ func TestAdd(t *testing.T) {
 		{New(), New(), New()},
 		{NewWithValues(1), NewWithValues(2), NewWithValues(3)},
 		{NewWithValues(1, 2), NewWithValues(3, 4), NewWithValues(4, 6)},
-		{NewWithValues(1), NewWithValues(1, 2), NewWithValues(2, 2)},
-		{NewWithValues(1.123), NewWithValues(1.123, 2.25), NewWithValues(2.246, 2.25)},
-		{NewWithValues(), NewWithValues(1, 2), NewWithValues(1, 2)},
 	}
-	for _, test := range tests {
+	for i, test := range tests {
 		actualSum, err := test.vectorA.Add(&test.vectorB)
 		if err != nil {
-			t.Fatalf("Failed with error %v", err)
+			t.Fatalf("Failed on test %d with error %v", i+1, err)
 		}
 		if test.expectedSum.Equals(&actualSum) == false {
-			t.Fatalf("Failed! Expected %v, found %v", test.expectedSum, actualSum)
+			t.Fatalf("Failed on test %d! Expected %v, found %v", i+1, test.expectedSum, actualSum)
 		}
 	}
+}
 
+func TestAddError(t *testing.T) {
+	tests := []struct {
+		vectorA Vector
+		vectorB Vector
+		err     error
+	}{
+		{NewWithValues(1), NewWithValues(1, 2), errors.New(INVALID_DIMENSION)},
+		{NewWithValues(), NewWithValues(1, 2), errors.New(INVALID_DIMENSION)},
+	}
+	for i, test := range tests {
+		actualSum, err := test.vectorA.Add(&test.vectorB)
+		if err == nil || !actualSum.Equals(&Vector{}) {
+			t.Fatalf("Failed on test %d. Expected an error, but got none", i+1)
+		}
+		if err.Error() != test.err.Error() {
+			t.Fatalf("Failed on test %d, Expected error %v, got %v", i+1, test.err, err)
+		}
+	}
 }
 
 func TestSubtract(t *testing.T) {
@@ -180,15 +252,11 @@ func TestSubtract(t *testing.T) {
 		{New(), New(), New()},
 		{NewWithValues(1), NewWithValues(2), NewWithValues(-1)},
 		{NewWithValues(3, 4), NewWithValues(1, 0), NewWithValues(2, 4)},
-		{NewWithValues(1), NewWithValues(1, 2), NewWithValues(0, -2)},
-		{NewWithValues(1, 2), NewWithValues(1), NewWithValues(0, 2)},
-		{NewWithValues(1.123), NewWithValues(1.123, 2.25), NewWithValues(0, -2.25)},
-		{NewWithValues(), NewWithValues(1, 2), NewWithValues(-1, -2)},
 	}
 	for i, test := range tests {
 		actualDifference, err := test.vectorA.Subtract(&test.vectorB)
 		if err != nil {
-			t.Fatalf("Failed with error %v", err)
+			t.Fatalf("Failed on test %d with error %v", i+1, err)
 		}
 		if test.expectedDifference.Equals(&actualDifference) == false {
 			t.Fatalf("Failed on test %d! Expected %v, found %v", i+1, test.expectedDifference, actualDifference)
@@ -196,6 +264,26 @@ func TestSubtract(t *testing.T) {
 	}
 }
 
+func TestSubtractError(t *testing.T) {
+	tests := []struct {
+		vectorA Vector
+		vectorB Vector
+		err     error
+	}{
+		{NewWithValues(1), NewWithValues(1, 2), errors.New(INVALID_DIMENSION)},
+		{NewWithValues(), NewWithValues(1, 2), errors.New(INVALID_DIMENSION)},
+		{NewWithValues(1, 2), NewWithValues(), errors.New(INVALID_DIMENSION)},
+	}
+	for i, test := range tests {
+		actualSum, err := test.vectorA.Subtract(&test.vectorB)
+		if err == nil || !actualSum.Equals(&Vector{}) {
+			t.Fatalf("Failed on test %d. Expected an error, but got none", i+1)
+		}
+		if err.Error() != test.err.Error() {
+			t.Fatalf("Failed on test %d, Expected error %v, got %v", i+1, test.err, err)
+		}
+	}
+}
 func TestConvertToUnitVector(t *testing.T) {
 	tests := []struct {
 		vector         Vector
@@ -278,6 +366,11 @@ func TestLength(t *testing.T) {
 		{New(), 0},
 		{NewWithValues(1, 2), math.Sqrt(5)},
 		{NewWithValues(1), 1},
+		{Vector{2, []float64{0, 0}}, 0},
+		{Vector{2, []float64{3, 4}}, 5},
+		{Vector{2, []float64{-3, 4}}, 5},
+		{Vector{2, []float64{3, -4}}, 5},
+		{Vector{2, []float64{-3, -4}}, 5},
 	}
 	for i, test := range tests {
 		actualLength := test.vector.Length()
@@ -295,6 +388,11 @@ func TestSquaredLength(t *testing.T) {
 		{New(), 0},
 		{NewWithValues(1, 2), 5},
 		{NewWithValues(1), 1},
+		{Vector{2, []float64{0, 0}}, 0},
+		{Vector{2, []float64{3, 4}}, 25},
+		{Vector{2, []float64{-3, 4}}, 25},
+		{Vector{2, []float64{3, -4}}, 25},
+		{Vector{2, []float64{-3, -4}}, 25},
 	}
 	for i, test := range tests {
 		actualSquaredLength := test.vector.SquaredLength()
@@ -311,8 +409,12 @@ func TestSet(t *testing.T) {
 		value  float64
 	}{
 		{NewWithValues(1, 2, 3), 0, 4},
-		{NewWithValues(1, 2, 3), 3, 0},
+		{NewWithValues(1, 2, 3), 2, 10},
+		{NewWithValues(1, 2, 3), 2, -10},
+		{NewWithValues(1, 2, 3), 2, -10.1234},
+		{NewWithValues(1, 2, 3), 2, 10.1234},
 	}
+
 	for i, test := range tests {
 		test.vector.Set(test.index, test.value)
 		foundValue := test.vector.Get(test.index)
@@ -320,4 +422,33 @@ func TestSet(t *testing.T) {
 			t.Fatalf("Failed on test %d! Expected %v, found %v", i+1, test.value, foundValue)
 		}
 	}
+}
+
+func TestSetPanic(t *testing.T) {
+	panicTests := []struct {
+		vector Vector
+		index  int
+		value  float64
+	}{
+		{NewWithValues(), -1, 4},
+		{NewWithValues(1), -1, 4},
+		{NewWithValues(1, 2, 3), -1, 4},
+		{NewWithValues(1, 2, 3), -5, 4},
+		{NewWithValues(1, 2, 3), 3, 0},
+		{NewWithValues(1, 2, 3), 5, 0},
+	}
+
+	for _, test := range panicTests {
+		testSetPanic(test.vector, test.index, test.value, t)
+	}
+}
+
+func testSetPanic(vector Vector, index int, value float64, t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatalf("The code did not panic")
+		}
+	}()
+
+	vector.Set(index, value)
 }
