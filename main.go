@@ -57,9 +57,6 @@ func getFile() *os.File {
 	return file
 }
 
-func simpleGradient() {
-}
-
 func checkError(err error) {
 	if err != nil {
 		log.Fatalf("Error %v", err)

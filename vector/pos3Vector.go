@@ -47,6 +47,10 @@ func (pv Pos3Vector) Subtract(v *Pos3Vector) Pos3Vector {
 	diff, _ := pv.Vector.Subtract(&v.Vector)
 	return Pos3Vector{diff}
 }
+
+func (pv Pos3Vector) Equals(v *Pos3Vector) bool {
+	return pv.Vector.Equals(&v.Vector)
+}
 func (pv Pos3Vector) X() float64 {
 	return pv.Get(0)
 }
