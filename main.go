@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	nx       = 400
-	ny       = 200
+	nx       = 1440
+	ny       = 900
 	testFile = "test.ppm"
 )
 

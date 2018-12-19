@@ -48,6 +48,10 @@ func (pv Pos3Vector) Dot(v *Pos3Vector) float64 {
 	return product
 }
 
+func (pv Pos3Vector) UnitVector() Pos3Vector {
+	return Pos3Vector{pv.Vector.UnitVector()}
+}
+
 func (v1 Pos3Vector) Cross(v2 *Pos3Vector) Pos3Vector {
 	return Pos3Vector{
 		NewWithValues(
