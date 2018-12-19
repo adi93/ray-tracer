@@ -7,6 +7,7 @@ import (
 )
 
 import (
+	"github.com/adi93/ray-tracer/ray"
 	"github.com/adi93/ray-tracer/vector"
 )
 
@@ -26,4 +27,6 @@ func simpleGradient(file *os.File) {
 	checkError(err)
 }
 
-func color(r Ray)
+func color(r ray.Ray) vector.Pos3Vector {
+	return vector.Pos3Vector{}
+}

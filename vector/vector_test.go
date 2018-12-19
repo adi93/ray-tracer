@@ -275,19 +275,21 @@ func TestSubtractError(t *testing.T) {
 		}
 	}
 }
-func TestConvertToUnitVector(t *testing.T) {
+func TestUnitVector(t *testing.T) {
 	tests := []struct {
 		vector         Vector
 		expectedVector Vector
 	}{
 		{New(), New()},
 		{NewWithValues(1, 2), NewWithValues(1/math.Sqrt(5), 2/math.Sqrt(5))},
+		{NewWithValues(0, 0), NewWithValues(0, 0)},
+		{NewWithValues(-1, 2), NewWithValues(-1/math.Sqrt(5), 2/math.Sqrt(5))},
 		{NewWithValues(1), NewWithValues(1)},
 	}
 	for i, test := range tests {
-		test.vector.ConvertToUnitVector()
-		if test.vector.Equals(&test.expectedVector) == false {
-			t.Fatalf("Failed on test %d! Expected %v, found %v", i+1, test.expectedVector, test.vector)
+		v := test.vector.UnitVector()
+		if !v.Equals(&test.expectedVector) {
+			t.Fatalf("Failed on test %d! Expected %v, found %v", i+1, test.expectedVector, v)
 		}
 	}
 }

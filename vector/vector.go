@@ -114,15 +114,16 @@ func (av Vector) SquaredLength() float64 {
 	return length
 }
 
-func (av Vector) ConvertToUnitVector() {
+func (av Vector) UnitVector() Vector {
+	v := Vector{av.dimension, make([]float64, av.dimension)}
 	length := av.Length()
 	if length == 0 {
-		return
+		return v
 	}
 	for i, x := range av.coordinates {
-		av.coordinates[i] = float64((float64)(x) / length)
+		v.coordinates[i] = float64((float64)(x) / length)
 	}
-	return
+	return v
 }
 
 func (av Vector) Set(i int, value float64) {
