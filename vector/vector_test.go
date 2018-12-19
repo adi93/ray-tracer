@@ -1,12 +1,3 @@
-/*
-Copyright 2018 Aditya Harit
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
 package vector
 
 import (
@@ -451,4 +442,40 @@ func testSetPanic(vector Vector, index int, value float64, t *testing.T) {
 	}()
 
 	vector.Set(index, value)
+}
+
+func TestDot(t *testing.T) {
+	tests := []struct {
+		vectorA Vector
+		vectorB Vector
+		product float64
+		err     error
+	}{
+		{New(), New(), 0, nil},
+
+		// zero vector test
+		{NewWithValues(1, 23, -232, 2), NewWithValues(0, 0, 0, 0), 0, nil},
+
+		// squared length test
+		{NewWithValues(1, 2, 3), NewWithValues(1, 2, 3), NewWithValues(1, 2, 3).SquaredLength(), nil},
+
+		//normal test
+		{NewWithValues(1, 2, 3), NewWithValues(2, 4, 6), 28, nil},
+
+		// invalid dimension test
+		{NewWithValues(1, 2, 3), NewWithValues(2, 4, 6, 5), 28, errors.New(INVALID_DIMENSION)},
+	}
+	for i, test := range tests {
+		actualProduct, err := test.vectorA.Dot(&test.vectorB)
+		if test.err == nil {
+			if err != nil {
+				t.Fatalf("Failed on test %d! Expected no error, but found: %v", i+1, err)
+			}
+			if actualProduct != test.product {
+				t.Fatalf("Failed on test %d! Expected %v, found %v", i+1, test.product, actualProduct)
+			}
+		} else if err.Error() != test.err.Error() {
+			t.Fatalf("Failed on test %d! Expected error: [%v], but found: [%v]", i+1, test.err, err)
+		}
+	}
 }

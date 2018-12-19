@@ -7,44 +7,31 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-package vector
+package ray
 
-type colorVector struct {
-	Vector
+import (
+	"github.com/adi93/ray-tracer/vector"
+	"testing"
+)
+
+func TestNew(t *testing.T) {
+
 }
 
-func NewColorVector() colorVector {
-	return colorVector{Vector{3, []float64{0, 0, 0}}}
+func TestNewRay(t *testing.T) {
+
 }
 
-func NewColorVectorFromArray(values [3]int) colorVector {
-	a := make([]float64, 3)
-	a[0] = (float64)(values[0])
-	a[1] = (float64)(values[1])
-	a[2] = (float64)(values[2])
-	return colorVector{Vector{3, a}}
-}
+func TestPointAtParameter(t *testing.T) {
+	tests := []struct {
+		ray   Ray
+		point float64
+		value vector.Pos3Vector
+	}{
+		{NewRay(vector.NewPos3VectorFromValues(0, 0, 0), vector.NewPos3VectorFromValues(1, 0, 0)), 2.0, vector.NewPos3VectorFromValues(2, 0, 0)},
+	}
 
-func NewColorVectorFromValues(r, g, b int) colorVector {
-	a := make([]float64, 3)
-	a[0] = (float64)(r)
-	a[1] = (float64)(g)
-	a[2] = (float64)(b)
-	return colorVector{Vector{3, a}}
-}
-
-func (cv colorVector) R() int {
-	return castToInt(cv.Get(0))
-}
-
-func (cv colorVector) G() int {
-	return castToInt(cv.Get(1))
-}
-
-func (cv colorVector) B() int {
-	return castToInt(cv.Get(2))
-}
-
-func castToInt(a float64) int {
-	return int(a)
+	for _, x := range tests {
+		t.Logf("%v", x.point)
+	}
 }
