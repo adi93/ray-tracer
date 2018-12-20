@@ -1,2 +1,4 @@
 tags
 *.ppm
+ray-tracer
+*.out

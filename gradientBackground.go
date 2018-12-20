@@ -15,7 +15,7 @@ func simpleGradient(file *os.File) {
 	var str strings.Builder
 	str.WriteString("P3\n" + strconv.Itoa(nx) + " " + strconv.Itoa(ny) + "\n255\n")
 
-	lowerLeftCorner := vector.NewPos3VectorFromValues(-2, -1, -1)
+	lowerLeftCorner := vector.NewPos3VectorFromValues(-2, -1, -0.01)
 	horizontal := vector.NewPos3VectorFromValues(4, 0, 0)
 	vertical := vector.NewPos3VectorFromValues(0, 2, 0)
 	origin := vector.NewPos3Vector()
@@ -39,8 +39,8 @@ func simpleGradient(file *os.File) {
 
 func color(r ray.Ray) vector.Pos3Vector {
 	unitDirection := r.Direction.UnitVector()
-	t := 0.5 * (0.5*(unitDirection.Y()+1) + 0.25*(unitDirection.X()+2))
-	blueComponent := vector.NewPos3VectorFromValues(0, 0, 1.0).MultiplyByScalar(t)
+	t := 0.5 * (unitDirection.Y() + 1)
+	blueComponent := vector.NewPos3VectorFromValues(0.3, 0, 1.0).MultiplyByScalar(t)
 	whiteComponent := vector.NewPos3VectorFromValues(1.0, 1.0, 1.0).MultiplyByScalar(1 - t)
 	return blueComponent.Add(&whiteComponent)
 }
