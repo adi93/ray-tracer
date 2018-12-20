@@ -1,8 +1,9 @@
 PKGS := $(shell go list ./...)
 
+RAY_TRACER := ray-tracer
 build: test
-	go build
-	./ray-tracer
+	go build -o $(RAY_TRACER)
+	./$(RAY_TRACER)
 	open test.ppm
 
 .PHONY: test
@@ -11,4 +12,5 @@ test:
 
 .PHONY: clean
 clean:
-	rm ray-tracer
+	go clean
+	rm *.ppm
