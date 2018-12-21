@@ -1,4 +1,4 @@
-package main
+package objects
 
 import (
 	"github.com/adi93/ray-tracer/ray"
@@ -12,4 +12,8 @@ type HitRecord struct {
 
 type HittableObject interface {
 	Hit(r ray.Ray, tMin float64, tMax float64, record HitRecord) bool
+}
+
+type World struct {
+	Objects []HittableObject
 }

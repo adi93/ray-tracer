@@ -7,11 +7,12 @@ import (
 )
 
 import (
+	"github.com/adi93/ray-tracer/objects"
 	"github.com/adi93/ray-tracer/ray"
 	"github.com/adi93/ray-tracer/vector"
 )
 
-func simpleGradient(file *os.File) {
+func simpleSphere(file *os.File) {
 	var str strings.Builder
 	str.WriteString("P3\n" + strconv.Itoa(nx) + " " + strconv.Itoa(ny) + "\n255\n")
 
@@ -20,13 +21,15 @@ func simpleGradient(file *os.File) {
 	vertical := vector.NewPos3VectorFromValues(0, 2, 0)
 	origin := vector.NewPos3Vector()
 
+	world := objects.World{[]objects.HittableObject{objects.Sphere{vector.NewPos3VectorFromValues(1, 0, 0), 3}}}
+
 	for j := ny - 1; j >= 0; j-- {
 		for i := 0; i < nx; i++ {
 			u, v := float64(i)/float64(nx), float64(j)/float64(ny)
 			tempHor, tempVert := horizontal.MultiplyByScalar(u), vertical.MultiplyByScalar(v)
 			ray := ray.NewRay(origin, lowerLeftCorner.Add(&tempHor).Add(&tempVert))
 
-			col := color(ray)
+			col := colorWorld(ray, world)
 			ir := int(255.99 * col.Get(0))
 			ig := int(255.99 * col.Get(1))
 			ib := int(255.99 * col.Get(2))
@@ -37,10 +40,6 @@ func simpleGradient(file *os.File) {
 	checkError(err)
 }
 
-func color(r ray.Ray) vector.Pos3Vector {
-	unitDirection := r.Direction.UnitVector()
-	t := 0.5 * (unitDirection.Y() + 1)
-	blueComponent := vector.NewPos3VectorFromValues(0.3, 0, 1.0).MultiplyByScalar(t)
-	whiteComponent := vector.NewPos3VectorFromValues(1.0, 1.0, 1.0).MultiplyByScalar(1 - t)
-	return blueComponent.Add(&whiteComponent)
+func colorWorld(r ray.Ray, world objects.World) vector.Pos3Vector {
+	return vector.Pos3Vector{}
 }

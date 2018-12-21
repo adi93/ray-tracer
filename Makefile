@@ -4,7 +4,6 @@ RAY_TRACER := ray-tracer
 build: test
 	go build -o $(RAY_TRACER)
 	./$(RAY_TRACER)
-	open test.ppm
 
 .PHONY: test
 test:
@@ -14,3 +13,7 @@ test:
 clean:
 	go clean
 	rm *.ppm
+
+.PHONY: view
+view: build
+	open test.ppm

@@ -17,7 +17,7 @@ func main() {
 	file := openFile()
 	defer file.Close()
 
-	simpleGradient(file)
+	simpleSphere(file)
 }
 
 func openFile() *os.File {
